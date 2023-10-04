@@ -1,0 +1,124 @@
+import React, { useState, useEffect, useCallback } from 'react';
+
+const App = () => {
+  // Game state variables
+  const [snake, setSnake] = useState([{ x: 5, y: 5 }]);
+  const [food, setFood] = useState({ x: 10, y: 10 });
+  const [direction, setDirection] = useState('RIGHT');
+  const [score, setScore] = useState(0);
+
+  // Game constants
+  const gridSize = 20;
+  const initialSpeed = 200;
+  const minSpeed = 100;
+
+  // Function to generate random food position
+  const generateFood = () => {
+    const newFood = {
+      x: Math.floor(Math.random() * gridSize),
+      y: Math.floor(Math.random() * gridSize),
+    };
+    setFood(newFood);
+  };
+
+  // Function to handle user input
+  const handleKeyDown = (e) => {
+    switch (e.key) {
+      case 'ArrowUp':
+        setDirection('UP');
+        break;
+      case 'ArrowDown':
+        setDirection('DOWN');
+        break;
+      case 'ArrowLeft':
+        setDirection('LEFT');
+        break;
+      case 'ArrowRight':
+        setDirection('RIGHT');
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Function to update the game state on each tick
+  const updateGame = useCallback(() => {
+    // Move the snake
+    const newSnake = [...snake];
+    const head = { ...newSnake[0] };
+
+    switch (direction) {
+      case 'UP':
+        head.y -= 1;
+        break;
+      case 'DOWN':
+        head.y += 1;
+        break;
+      case 'LEFT':
+        head.x -= 1;
+        break;
+      case 'RIGHT':
+        head.x += 1;
+        break;
+      default:
+        break;
+    }
+
+    newSnake.unshift(head);
+
+    // Check for collision with food
+    if (head.x === food.x && head.y === food.y) {
+      setScore(score + 1);
+      generateFood();
+    } else {
+      newSnake.pop();
+    }
+
+    // Check for collision with walls or self
+    if (
+      head.x < 0 ||
+      head.x >= gridSize ||
+      head.y < 0 ||
+      head.y >= gridSize ||
+      newSnake.slice(1).some((segment) => segment.x === head.x && segment.y === head.y)
+    ) {
+      alert('Game Over');
+      // Reset the game
+      setSnake([{ x: 5, y: 5 }]);
+      setFood({ x: 10, y: 10 });
+      setDirection('RIGHT');
+      setScore(0);
+    } else {
+      setSnake(newSnake);
+    }
+  }, [direction, food, score, snake]);
+
+  // Game loop
+  useEffect(() => {
+    const gameInterval = setInterval(updateGame, initialSpeed);
+    return () => clearInterval(gameInterval);
+  }, [updateGame]);
+
+  // Initial food generation
+  useEffect(() => {
+    generateFood();
+  }, []);
+
+  // Event listener for user input
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <div>
+      <h1>Snake Game</h1>
+      <div className="game-container">
+        {/* Render game grid, snake, and food */}
+      </div>
+      <div className="score">Score: {score}</div>
+    </div>
+  );
+};
+
+export default App;
